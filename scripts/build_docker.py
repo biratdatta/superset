@@ -23,7 +23,7 @@ from textwrap import dedent
 
 import click
 
-REPO = "apache/superset"
+REPO = "ghcr.io/bharatsahaiyak/superset"
 CACHE_REPO = f"{REPO}-cache"
 BASE_PY_IMAGE = "3.9-slim-bookworm"
 
@@ -65,7 +65,7 @@ def get_build_context_ref(build_context: str) -> str:
         github_head_ref = os.getenv("GITHUB_HEAD_REF", "")
         return re.sub("[^a-zA-Z0-9]", "-", github_head_ref)[:40]
     elif event == "release":
-        return re.sub("refs/tags/", "", github_ref)[:40]
+        return re.sub("refs/tags/v", "", github_ref)[:40]
     elif event == "push":
         return re.sub("[^a-zA-Z0-9]", "-", re.sub("refs/heads/", "", github_ref))[:40]
     return ""
@@ -277,7 +277,7 @@ def main(
             script = dedent(
                 f"""\
                 docker logout
-                docker login --username "{os.getenv("DOCKERHUB_USER")}" --password "{os.getenv("DOCKERHUB_TOKEN")}"
+                docker login ghcr.io --username "{os.getenv("DOCKERHUB_USER")}" --password "{os.getenv("DOCKERHUB_TOKEN")}"
                 DOCKER_ARGS="--push"
                 """
             )
