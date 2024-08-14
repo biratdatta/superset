@@ -34,6 +34,7 @@ import {
   MenuObjectProps,
   MenuData,
 } from 'src/types/bootstrapTypes';
+
 import RightMenu from './RightMenu';
 
 interface MenuProps {
@@ -236,8 +237,12 @@ export function Menu({
     }
   }, [location.pathname]);
 
-  const standalone = getUrlParam(URL_PARAMS.standalone);
-  if (standalone || uiConfig.hideNav) return <></>;
+  const isStandaloneView =
+    new URLSearchParams(location.search).get('view') === 'standalone';
+
+  if (isStandaloneView) {
+    return null;
+  }
 
   const renderSubMenu = ({
     label,
