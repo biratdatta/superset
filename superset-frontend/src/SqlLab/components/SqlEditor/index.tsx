@@ -27,6 +27,7 @@ import React, {
   ChangeEvent,
 } from 'react';
 import type AceEditor from 'react-ace';
+import { useLocation } from 'react-router-dom';
 import useEffectEvent from 'src/hooks/useEffectEvent';
 import { CSSTransition } from 'react-transition-group';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -97,6 +98,8 @@ import {
   setItem,
 } from 'src/utils/localStorageHelpers';
 import { EmptyStateBig } from 'src/components/EmptyState';
+import { getUrlParam } from 'src/utils/urlUtils';
+import { URL_PARAMS } from 'src/constants';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import TemplateParamsEditor from '../TemplateParamsEditor';
 import SouthPane from '../SouthPane';
@@ -147,6 +150,11 @@ const StyledToolbar = styled.div`
     white-space: nowrap;
   }
 `;
+const useStandaloneView = () => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  return queryParams.get('view') === 'standalone';
+};
 
 const StyledSidebar = styled.div<{ width: number; hide: boolean | undefined }>`
   flex: 0 0 ${({ width }) => width}px;
@@ -245,6 +253,9 @@ const SqlEditor: React.FC<Props> = ({
   const theme = useTheme();
   const dispatch = useDispatch();
 
+  
+  const isStandaloneView = useStandaloneView();
+
   const { database, latestQuery, hideLeftBar, currentQueryEditorId } =
     useSelector<
       SqlLabRootState,
@@ -266,7 +277,7 @@ const SqlEditor: React.FC<Props> = ({
       return {
         database: databases[dbId || ''],
         latestQuery: queries[latestQueryId || ''],
-        hideLeftBar,
+        hideLeftBar: isStandaloneView ? true : hideLeftBar,
         currentQueryEditorId: tabHistory.slice(-1)[0],
       };
     }, shallowEqual);
@@ -674,6 +685,7 @@ const SqlEditor: React.FC<Props> = ({
     );
   };
 
+
   const onSaveQuery = async (query: QueryPayload, clientId: string) => {
     const savedQuery = await dispatch(saveQuery(query, clientId));
     dispatch(addSavedQueryToTabState(queryEditor, savedQuery));
@@ -835,7 +847,7 @@ const SqlEditor: React.FC<Props> = ({
   const leftBarStateClass = hideLeftBar
     ? 'schemaPane-exit-done'
     : 'schemaPane-enter-done';
-  return (
+   return (
     <StyledSqlEditor ref={sqlEditorRef} className="SqlEditor">
       <CSSTransition classNames="schemaPane" in={!hideLeftBar} timeout={300}>
         <ResizableSidebar
@@ -846,7 +858,7 @@ const SqlEditor: React.FC<Props> = ({
         >
           {adjustedWidth => (
             <StyledSidebar
-              className={`schemaPane ${leftBarStateClass}`}
+              className={`schemaPane ${hideLeftBar ? 'hidden' : ''}`}
               width={adjustedWidth}
               hide={hideLeftBar}
             >
