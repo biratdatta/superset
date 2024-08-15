@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, MutableRefObject } from 'react';
 import type { IAceEditor } from 'react-ace/lib/types';
 import { useDispatch } from 'react-redux';
 import { css, styled, usePrevious } from '@superset-ui/core';
@@ -67,6 +67,20 @@ const StyledAceEditor = styled(AceEditor)`
     }
   `}
 `;
+const StyledButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  background-color: ${({ theme }) => theme.colors.primary};
+  border: none;
+  color: ${({ theme }) => theme.colors.grayscale.dark1};
+  border-radius: 4px;
+  cursor: pointer;
+
+
+`;
 
 const AceEditorWrapper = ({
   autocomplete,
@@ -87,6 +101,7 @@ const AceEditorWrapper = ({
     'cursorPosition',
   ]);
 
+  const editorRef = useRef<IAceEditor | null>(null);
   const currentSql = queryEditor.sql ?? '';
   const cursorPosition = queryEditor.cursorPosition ?? { row: 0, column: 0 };
   const [sql, setSql] = useState(currentSql);
@@ -96,6 +111,12 @@ const AceEditorWrapper = ({
   // needs to be stored out of the state to ensure changes to it
   // get saved immediately
   const currentSelectionCache = useRef('');
+  const handleCopyToClipboard = () => {
+    if (editorRef.current) {
+      const text = editorRef.current.editor.getValue();
+      navigator.clipboard.writeText(text);
+    }
+  };
 
   useEffect(() => {
     // Making sure no text is selected from previous mount
@@ -184,18 +205,25 @@ const AceEditorWrapper = ({
   );
 
   return (
-    <StyledAceEditor
-      keywords={keywords}
-      onLoad={onEditorLoad}
-      onBlur={onBlurSql}
-      height={height}
-      onChange={onChangeText}
-      width="100%"
-      editorProps={{ $blockScrolling: true }}
-      enableLiveAutocompletion={autocomplete}
-      value={sql}
-      annotations={annotations}
-    />
+    <>
+      <StyledAceEditor
+        ref={editorRef}
+        keywords={keywords}
+        onLoad={onEditorLoad}
+        onBlur={onBlurSql}
+        height={height}
+        onChange={onChangeText}
+        width="100%"
+        editorProps={{ $blockScrolling: true }}
+        enableLiveAutocompletion={autocomplete}
+        value={sql}
+        annotations={annotations}
+      />
+
+      <StyledButton onClick={handleCopyToClipboard} type="button">
+        Copy to Clipboard
+      </StyledButton>
+    </>
   );
 };
 
