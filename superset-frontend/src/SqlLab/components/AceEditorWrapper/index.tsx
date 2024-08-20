@@ -78,8 +78,6 @@ const StyledButton = styled.button`
   color: ${({ theme }) => theme.colors.grayscale.dark1};
   border-radius: 4px;
   cursor: pointer;
-
-
 `;
 
 const AceEditorWrapper = ({
@@ -105,19 +103,27 @@ const AceEditorWrapper = ({
   const currentSql = queryEditor.sql ?? '';
   const cursorPosition = queryEditor.cursorPosition ?? { row: 0, column: 0 };
   const [sql, setSql] = useState(currentSql);
+  const [buttonText, setButtonText] = useState('Copy to Clipboard');
 
   // The editor changeSelection is called multiple times in a row,
   // faster than React reconciliation process, so the selected text
   // needs to be stored out of the state to ensure changes to it
   // get saved immediately
   const currentSelectionCache = useRef('');
+
   const handleCopyToClipboard = () => {
     if (editorRef.current) {
       const text = editorRef.current.editor.getValue();
-      navigator.clipboard.writeText(text);
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          setButtonText('Copied');
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+        });
     }
   };
-
   useEffect(() => {
     // Making sure no text is selected from previous mount
     dispatch(queryEditorSetSelectedText(queryEditor, null));
@@ -184,6 +190,7 @@ const AceEditorWrapper = ({
   const onChangeText = (text: string) => {
     if (text !== sql) {
       setSql(text);
+      setButtonText('Copy to Clipboard');
       onChange(text);
     }
   };
@@ -219,9 +226,8 @@ const AceEditorWrapper = ({
         value={sql}
         annotations={annotations}
       />
-
       <StyledButton onClick={handleCopyToClipboard} type="button">
-        Copy to Clipboard
+        {buttonText}
       </StyledButton>
     </>
   );
